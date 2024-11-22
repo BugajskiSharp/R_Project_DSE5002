@@ -18,6 +18,8 @@ Your CEO wants you to give them a range of salaries for all full time data scien
 
 -Since the CEO is wanting someone that will grow with their company, they are asking for the salaries of Entry to Mid Level positions.
 
+-The CEO isn't looking for Manager, Principal, Director, Lead, or Head positions at the moment, they are looking for someone that can start up with their company and grow into those leadership positions. 
+
 -Since the CEO's company is currently small, they should be looking at salaries of small companies. 
 
 -Need to find the percentage of salary increase over the years to calculate what the current salaries would be for 2025.
@@ -123,7 +125,10 @@ ggplot(salaries, aes(x= employment_type, y = salary_in_usd))+
 ggplot(salaries, aes(x= job_title, y = salary_in_usd))+
   geom_boxplot()+
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+#Data Analytics Lead, Data Analytics Manager, Data Engineering Manager, Data Science Manager, Director of Data Engineering, Director of Data Science, Head of Data, Head of Data Science, Head of Machine Learning
 ```
+
 
 **Plot for variable salary**
 ```{R}
@@ -168,17 +173,20 @@ ggplot(salaries, aes(x= company_size , y = salary_in_usd))+
 
 **1). What are the salaries of full time data scientist positions by experience over the years?**  
 
-Filtering the data from Salaries of Full-Time Data Scientists in the US from 2020 to 2022.
+Filtering the data from Salaries of Full-Time Data Scientists in the US from 2020 to 2022. Taking into account the job titles and eliminating ones that are Manager, Principal,Director,Lead, and Head positions
 ```{R}
 require(dplyr)
 
-  # Find only Full time employees
-filtered_salaries<- salaries %>% filter(grepl("FT", employment_type)) 
+  # Find only Full time employees and job titles that don't have leadership positions
+filtered_salaries<- salaries %>% filter(grepl("FT", employment_type))
+
+filtered_Jobs <- filtered_salaries[!grepl("Manager|Principal|Director|Lead|Head", filtered_salaries$job_title), ]
+
 
   # Change the order of experience level and rename for nice graph display
-filtered_salaries$experience_level <- factor(filtered_salaries$experience_level, levels = c("EN", "MI", "SE","EX"))
+filtered_Jobs$experience_level <- factor(filtered_Jobs$experience_level, levels = c("EN", "MI", "SE","EX"))
 
- new_filtered_salaries<- filtered_salaries %>%
+ new_filtered_salaries<- filtered_Jobs %>%
   mutate(experience_level = recode(experience_level, 
                          "EN" = "Entry-level", 
                          "MI" = "Mid-level",
@@ -191,7 +199,6 @@ outliers <- boxplot.stats(new_filtered_salaries$salary_in_usd)$out
 cleaned_salaries <- new_filtered_salaries[!new_filtered_salaries$salary_in_usd %in% outliers, ]
   
 head(cleaned_salaries)
-
 ```
 Graphing the data
 ```{R}
@@ -215,9 +222,9 @@ ggplot(cleaned_salaries, aes(x = work_year, y =salary_in_usd, fill = experience_
 
 ## Analyze Results:
 
-As you many already know, Data Scientist salaries vary wildly around the world and year to year. I'm going to simplify a salary range that will be perfect for paying your new Data Scientist employee. I'll make a note that Before graphing this data, I disregarded some big outliers so we can start narrowing down that range. 
+As you many already know, Data Scientist salaries vary wildly around the world and year to year. I'm going to simplify a salary range that will be perfect for paying your new Data Scientist employee. I'll make a note that Before graphing this data, I found job positions that are not in leadership roles, since you are looking for someone to grow with your company, and I also disregarded some big outliers so we can start narrowing down that range. 
 
-Let's look at the graph. On the x-axis we have Years from 2020 to 2022, on the y-axis we have Salaries in USD of all full time Data Scientists, and the data is grouped and colored by experience levels, from Entry to Executive level. Sure enough, we can see that as the years increase within each experience level, the majority of the salaries also increase. I did some further research and found that the employment of data scientists is projected to grow 36% from 2021 to 2031 (Rutgers University, 2024). We must take this into account so we can have an accurate range for today's salaries. You can also see that as you move from an Entry-level position to the Executive-level position, the salaries increase
+Let's look at the graph. On the x-axis we have Years from 2020 to 2022, on the y-axis we have Salaries in USD of all full time Data Scientists, and the data is grouped and colored by experience levels, from Entry to Executive level. Sure enough, we can see that as the years increase within each experience level, the majority of the salaries also increase. I did some further research and found that the employment of data scientists is projected to grow 36% from 2021 to 2031 (Rutgers University, 2024). We must take this into account so we can have an accurate range for today's salaries. You can also see that as you move from an Entry-level position to the Executive-level position, the salaries increase.
 
 Ham, C., Hann, R. N., Wang, W., & Yang, J. (2023). Going remote? the role of Labor Market Competition. SSRN Electronic Journal. https://doi.org/10.2139/ssrn.4201819 
 
@@ -230,7 +237,7 @@ Ham, C., Hann, R. N., Wang, W., & Yang, J. (2023). Going remote? the role of Lab
 require("knitr")
 require("kableExtra")
 
-# Function to add a percentage to a number for the projected 36% increase from 2021 to 2031, with 14.4% from 2021 to today 2025
+  # Function to add a percentage to a number for the projected 36% increase from 2021 to 2031, with 14.4% from 2021 to today 2025
 
 add_percentage <- function(original_number, percentage) {
   increase <- original_number * (percentage / 100)
@@ -238,7 +245,7 @@ add_percentage <- function(original_number, percentage) {
   return(new_number)
 }
 
-#Creating a data frame of Median and Interquartile salary ranges
+  #Creating a data frame of Median and Interquartile salary ranges
 
 salaries_data <- cleaned_salaries%>%
   group_by(experience_level) %>%
@@ -256,7 +263,7 @@ colnames(salaries_data) <- c("Experience Level", "Median", "Q1", "Q3")
 salaries_data$Q1 <- as.numeric(salaries_data$Q1)
 salaries_data$Q3<- as.numeric(salaries_data$Q3)
 
-# Using function to add a percentage to a number for the projected 36% increase from 2021 to 2031, with 14.4% from 2021 to today 2025
+  #Using function to add a percentage to a number for the projected 36% increase from 2021 to 2031, with 14.4% from 2021 to today 2025
 
 salaries_data$Median <- add_percentage(salaries_data$Median, 14.4)
 salaries_data$Q1<- add_percentage(salaries_data$Q1, 14.4)
@@ -269,7 +276,7 @@ salaries_data$Median <- dollar(salaries_data$Median)
 salaries_data$Q1<- dollar(salaries_data$Q1)
 salaries_data$Q3<- dollar(salaries_data$Q3)
 
-#Creating a presentable table 
+  #Creating a presentable table 
 
 kable(salaries_data, caption = "Estimated 2025 Full time Data Scientist Salaries") %>% 
   kable_styling("striped", full_width = FALSE, position = "center", font_size = 12)%>%
@@ -282,11 +289,15 @@ kable(salaries_data, caption = "Estimated 2025 Full time Data Scientist Salaries
 ```
 
 ## Analyze Results:
- Let's look more deeply and see what the projected 2025 full time Data Scientist salaries would be by looking at a table. This table shows the estimated 2025 salaries. The table contains the Median and the Interquartile range of the middle 50% of our data. It goes from Q1, the lower part of that range, and Q3,  the upper part of that range. This way we can see the majority of our data and narrow down the range even further. 
+Let's look more deeply and see what the projected 2025 full time Data Scientist salaries would be by looking at a table. This table shows the estimated 2025 salaries. The table contains the Median and the Interquartile range of the middle 50% of our data. It goes from Q1, the lower part of that range, and Q3,  the upper part of that range. This way we can see the majority of our data and narrow down the range even further. 
 
 Since you currently have a small company and want your data scientist growing and learning the ways of your company as it continues to expand rapidly, you should look at hiring a data scientist that is at the Entry to Mid Level position. This way they will advance to the Senior or Executive level positions by the time your company becomes large, being able to lead new employees in the future. Also, to be competitive and to get top talent, it is important to look more toward the higher end of the salaries range, looking at the range from the median, up to Q3.  
   
+With this in mind and the projected 36% increase from 2021 to 2031, if you were to hire an Entry-level data scientist today, you are looking to pay them anywhere from $68,000 to $98,000. If you were to hire a Mid-level data scientist today, you are looking to pay them anywhere from $88,000 to $126,000.
 
+Now, these salaries still account for all sized companies and companies not located in the US. So, let's take a closer look and compare the different company sizes and salaries for companies located in and out of the US.  
+
+  
 **3).For the estimated 2025 salary percent increase, what are the Entry and Mid level salaries of full time data scientists in the US vs not in the US among the different company sizes?**
 
 Filtering data so we can compare company location in US vs not in the US.
@@ -396,14 +407,13 @@ Now we are looking at estimated salaries for 2025 of Full time Data Scientists t
 
 Let's look at the higher end of the salaries, from the Median to Q3 again to be competitive and to get top talent. 
 
-With the projected 36% increase from 2021 to 2031, if you were to hire a Entry to Mid level employee not located in the US today, you are looking to pay them anywhere from $51,000 to $84,000. If you were to hire a Entry to Mid level employee working in the US today, you are looking to pay them anywhere from $66,000 to $117,000.
-
+With the projected 36% increase from 2021 to 2031, if you were to hire a Entry to Mid level employee not located in the US today, you are looking to pay them anywhere from $48,000 to $84,000. If you were to hire a Entry to Mid level employee working in the US today, you are looking to pay them anywhere from $66,000 to $117,000.
 
 
 # Conclusion:
 
 
-So, I would recommend paying a data scientist anywhere from **$66,000 to $117,000**. This would get you a full-time data scientist that is at an Entry or Mid level position that can grow with your company and eventually become someone who can drive data science within the entire organization and could potentially lead a team in the future. This salary range is for a data scientist that is used to working for a small company and in the US. If you decide you don't mind your employee working outside of the US, you can pay them anywhere from **$51,000 to $84,000**.  All these ranges account for the higher salary ranges due to the market being highly competitive. This higher salary range will also appeal to top talented data scientists.  
+So, I would recommend paying a data scientist anywhere from **$66,000 to $117,000**. This would get you a full-time data scientist that is at an Entry or Mid level position that can grow with your company and eventually become someone who can drive data science within the entire organization and could potentially lead a team in the future. This salary range is for a data scientist that is used to working for a small company and in the US. If you decide you don't mind your employee working outside of the US, you can pay them anywhere from **$48,000 to $84,000**.  All these ranges account for the higher salary ranges due to the market being highly competitive. This higher salary range will also appeal to top talented data scientists. 
 
 
 
